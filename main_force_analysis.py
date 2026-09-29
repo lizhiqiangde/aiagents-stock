@@ -148,7 +148,10 @@ class MainForceAnalyzer:
         summary_lines.append(f"候选股票总数: {len(df)}只")
         
         # 主力资金统计
-        main_fund_cols = [col for col in df.columns if '主力' in col and '净流入' in col]
+        # 注意：实际列名是『区间主力资金流向』，不含"净流入"字样，
+        # 用 '主力' and '净流入' 匹配不到（该分支曾长期是哑的）。
+        main_fund_cols = [col for col in df.columns
+                          if '主力' in col and ('净流入' in col or '资金流向' in col)]
         if main_fund_cols:
             col_name = main_fund_cols[0]
             df[col_name] = pd.to_numeric(df[col_name], errors='coerce')
@@ -508,7 +511,10 @@ class MainForceAnalyzer:
             print(f"  ❌ JSON解析失败，使用备选方案: {e}")
             
             # 降级方案：按主力资金排序返回前N个
-            main_fund_cols = [col for col in df.columns if '主力' in col and '净流入' in col]
+            # 注意：实际列名是『区间主力资金流向』，不含"净流入"字样，
+            # 用 '主力' and '净流入' 匹配不到（该分支曾长期是哑的）。
+            main_fund_cols = [col for col in df.columns
+                              if '主力' in col and ('净流入' in col or '资金流向' in col)]
             if main_fund_cols:
                 col_name = main_fund_cols[0]
                 df[col_name] = pd.to_numeric(df[col_name], errors='coerce')

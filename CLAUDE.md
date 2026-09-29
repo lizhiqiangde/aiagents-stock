@@ -18,7 +18,8 @@ python -m venv venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Install Playwright browser (required for 选股/stock screening via iwencai.com)
+# Install Playwright browser — only needed for the pywencai fallback branch.
+# Screening no longer requires it (see "Data Sources" — iwencai is dead).
 playwright install chromium
 
 # Copy and configure environment
@@ -113,15 +114,39 @@ Historical K-line  → Tencent proxy.finance.qq.com
 Real-time quotes   → Sina hq.sinajs.cn
 Stock fundamentals → Sina hq.sinajs.cn
 Financial reports  → Tonghuashun / Sina
-Stock screening    → iwencai.com (via Playwright browser for CAPTCHA bypass)
-Fund flow          → Eastmoney (degraded) → skipped on failure
+Stock screening    → Sina (today's fund flow) + Tonghuashun (3/5/10/20d fund flow)
+                     + Tencent (quotes) + Eastmoney (financials, unlocks, holder
+                       changes, announcements) — see utils/screener_data.py
+Fund flow          → Sina MoneyFlow.ssl_bkzj_ssggzj (today) /
+                     data.10jqka.com.cn (multi-day)
 Fallback           → Tushare (requires TUSHARE_TOKEN in .env)
+                     + pywencai as a per-module fallback branch
 US/HK stocks       → Yahoo Finance (yfinance)
 ```
 
+**iwencai is dead.** `POST /customized/chart/get-robot-data` returns 403 for all
+programmatic requests, even with real login cookies — no in-app fix exists, and
+being logged in does not help. Don't try to resurrect it via Playwright.
+
+**Eastmoney `push2` is route-blocked from some networks.** All shard hosts
+(`push2`, `push2his`, `1.push2`, `7.push2`, `push2delay`, `82.push2`) fail together
+for minutes at a time; `curl` fails identically, while other Eastmoney hosts work
+in the same instant. `utils/eastmoney_client.py` holds the host-health pool, but
+screening does **not** depend on push2. The `datacenter-web` report API *is*
+usable — but note it **silently returns 0 rows** for date-*range* filters on
+`FREE_DATE`/`NOTICE_DATE` (looks like "no data", isn't), so those are filtered
+locally in pandas instead.
+
+`utils/screener_data.py` exposes a declarative `screen()` used by the four
+screening modules, plus `CANONICAL_COLUMNS` — the column-name contract the
+UI/AI layers depend on. **Column order in that list is a hard requirement**, not
+style: downstream code resolves columns with `[col for col in df.columns if ...][0]`.
+
 Key utilities for data access:
+- `utils/screener_data.py` — the screening data layer: fund flow + quotes + financials merge, `screen()`, `CANONICAL_COLUMNS`
+- `utils/eastmoney_client.py` — Eastmoney transport (host-health rotation, throttling, retries, datacenter paging)
 - `utils/akshare_helper.py` — monkey-patches `requests` with browser User-Agent headers + retry decorator
-- `utils/iwencai_browser.py` — headless Chromium via Playwright to obtain real browser cookies for iwencai.com (5-minute cache)
+- `utils/iwencai_browser.py` — headless Chromium via Playwright to obtain real browser cookies for iwencai.com (5-minute cache). Only feeds the now-dead pywencai path.
 - `utils/pywencai_helper.py` — `safe_get()` wrapper: direct call → browser cookie retry fallback
 
 ### Persistence
@@ -140,7 +165,7 @@ Ten separate SQLite `.db` files in the project root, each managed by its own ded
 | 新闻流量 | `news_flow_*.py` (10 files) | Multi-platform news monitoring → AI impact analysis on sectors/stocks |
 | 宏观分析 | `macro_analysis_*.py` (4 files) | National Bureau of Statistics data → sector mapping |
 | 宏观周期 | `macro_cycle_*.py` (5 files) | Kondratieff cycle + Merrill Lynch clock + China policy analysis |
-| 选股板块 | `low_price_bull_*.py`, `small_cap_*.py`, `profit_growth_*.py`, `value_stock_*.py` | Various screening strategies via iwencai.com |
+| 选股板块 | `low_price_bull_*.py`, `small_cap_*.py`, `profit_growth_*.py`, `value_stock_*.py` | Various screening strategies; all delegate to `screener_data.screen()` |
 | 实时监测 | `monitor_*.py` | Price threshold monitoring with trading-hours-aware scheduler |
 | AI盯盘 | `smart_monitor_*.py` (7 files) | Automated watch with K-line pattern recognition, TDX data, MiniQMT trading |
 | 持仓分析 | `portfolio_*.py` | Portfolio tracking, batch analysis, scheduled analysis |

@@ -41,7 +41,7 @@ def display_main_force_selector():
     
     本功能通过以下步骤筛选优质股票：
     
-    1. **数据获取**: 使用问财获取指定日期以来主力资金净流入前100名股票
+    1. **数据获取**: 从新浪/同花顺获取全市场主力资金净流入排名，取前100名
     2. **智能筛选**: 过滤掉涨幅过高、市值不符的股票
     3. **AI分析**: 调用资金流向、行业板块、财务基本面三大分析师团队
     4. **综合决策**: 资深研究员综合评估，精选3-5只优质标的
@@ -62,25 +62,13 @@ def display_main_force_selector():
     with col1:
         date_option = st.selectbox(
             "选择时间区间",
-            ["最近3个月", "最近6个月", "最近1年", "自定义日期"]
+            ["今日", "3日", "5日", "10日", "20日"],
+            help="数据源只提供固定周期，不支持任意起始日期"
         )
-
-        if date_option == "最近3个月":
-            days_ago = 90
-            start_date = None
-        elif date_option == "最近6个月":
-            days_ago = 180
-            start_date = None
-        elif date_option == "最近1年":
-            days_ago = 365
-            start_date = None
-        else:
-            custom_date = st.date_input(
-                "选择开始日期",
-                value=datetime.now() - timedelta(days=90)
-            )
-            start_date = f"{custom_date.year}年{custom_date.month}月{custom_date.day}日"
-            days_ago = None
+        days_ago = {"今日": 1, "3日": 3, "5日": 5, "10日": 10, "20日": 20}[date_option]
+        start_date = None
+        st.caption("主力资金流周期。东财/新浪/同花顺均只提供固定周期，"
+                   "不支持任选起止日期。")
 
     with col2:
         final_n = st.slider(

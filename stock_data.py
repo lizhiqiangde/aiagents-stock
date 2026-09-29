@@ -6,13 +6,11 @@ import ta
 from datetime import datetime, timedelta
 import requests
 import json
-import pywencai
 import time
 from data_source_manager import data_source_manager
 
 # 应用 akshare 请求补丁（确保请求头/超时/重试）
 from utils.akshare_helper import patch_requests, retry_on_failure
-from utils.pywencai_helper import safe_get
 patch_requests()
 
 class StockDataFetcher:

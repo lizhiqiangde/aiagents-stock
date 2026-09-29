@@ -80,7 +80,7 @@ class StockAnalysisAgents:
         
         # 如果有风险数据，显示数据来源
         if risk_data and risk_data.get('data_success'):
-            print("   ✓ 已获取问财风险数据（限售解禁、大股东减持、重要事件）")
+            print("   ✓ 已获取风险数据（限售解禁、大股东减持、重要事件）")
         else:
             print("   ⚠ 未获取到风险数据，将基于基本信息分析")
         
@@ -94,10 +94,10 @@ class StockAnalysisAgents:
             fetcher = RiskDataFetcher()
             risk_data_text = f"""
 
-【实际风险数据】（来自问财）
+【实际风险数据】（来自东方财富）
 {fetcher.format_risk_data_for_ai(risk_data)}
 
-以上是通过问财（pywencai）获取的实际风险数据，请重点关注这些数据进行深度风险分析。
+以上是通过东方财富（结构化报表 + 个股公告）获取的实际风险数据，请重点关注这些数据进行深度风险分析。
 """
         
         risk_prompt = f"""
@@ -117,7 +117,7 @@ class StockAnalysisAgents:
 - 波动率指标等
 {risk_data_text}
 
-⚠️ 重要提示：以上风险数据是从问财（pywencai）实时查询的完整原始数据，请你：
+⚠️ 重要提示：以上风险数据是从东方财富实时查询的完整原始数据，请你：
 1. 仔细解析每一条记录的所有字段信息
 2. 识别数据中的关键风险点（时间、规模、频率、股东身份等）
 3. 对数据进行深度分析，不要遗漏任何重要信息

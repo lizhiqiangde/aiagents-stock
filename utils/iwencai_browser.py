@@ -17,10 +17,43 @@ iwencai 浏览器会话模块
     result = pywencai.get(query=..., cookie=cookies)
 """
 
+import io
+import sys
 import time
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _setup_stdout_encoding():
+    """把 stdout 设为 UTF-8，避免 GBK 控制台在 print emoji 时崩溃。
+
+    本模块的提示语带 emoji。Windows 控制台默认 GBK 时 `print('🚀')` 会抛
+    UnicodeEncodeError —— 而它排在 `try` **之前**，导致函数连浏览器都启动不了；
+    更糟的是 except 分支里的 print 也会因为同样的原因再抛一次，把原始异常盖掉。
+
+    ⚠️ 这里**不**沿用「能 import streamlit 就跳过」的老写法：Streamlit 应用
+    同样可能从 GBK 控制台启动，跳过等于保护失效。用 errors='replace' 后，
+    重新配置在两种环境下都只会放宽而不会收紧，故总是执行。
+
+    优先 `reconfigure`：`sys.stdout` 可能已被包装过而没有 `.buffer`
+    属性（此时 `TextIOWrapper(sys.stdout.buffer, ...)` 会 AttributeError）。
+    """
+    if sys.platform != 'win32':
+        return
+
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        return
+    except Exception:
+        pass
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
+
+_setup_stdout_encoding()
 
 # 缓存浏览器 cookies（每次有效期为5分钟）
 _cookie_cache = None

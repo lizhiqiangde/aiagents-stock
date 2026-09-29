@@ -1,6 +1,16 @@
 """
 新闻公告数据获取模块
 使用pywencai获取股票的最新新闻和公告信息
+
+⚠️ 已废弃 / 全仓零引用
+----------------------
+`grep -rn "news_announcement_data" --include=*.py .` 在仓库里**没有任何**导入方
+（只有一个不再被调用的历史遗留）。且它依赖的 iwencai 接口已对程序化请求一律
+返回 403，即便被调用也不会成功。
+
+按既有决定**保留不删**，仅加此说明以免后来者误以为它在生效。
+若需要新闻/公告能力，请改用：
+    utils/screener_data.em_announcements(code)   # 东方财富个股公告
 """
 
 import pandas as pd

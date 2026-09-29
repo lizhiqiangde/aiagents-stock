@@ -5,8 +5,13 @@
 /test_pe_pb.py
 /venv
 /__pycache__
+# 注意：`/__pycache__` 只匹配根目录，子目录（如 utils/__pycache__）需要下面这条
+__pycache__/
 # 环境变量文件
 .env
 /.cursor
 /openspec
 TradEnv/
+# iwencai 登录凭据（含 cookie，切勿提交）
+/.iwencai_cookie.txt
+/.iwencai_session/
